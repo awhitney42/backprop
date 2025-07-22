@@ -1,10 +1,11 @@
 #include <time.h>
+#include <stdlib.h>
 
 float rand0(long *idum);
 int randint(long *idum, int range);
 float rand2(long *idum);
 unsigned long randqd1(unsigned long *idum);
-int random(long *seed);
+int random1(long *seed);
 
 /* randint:                                             */
 /* POST: FCTVAL == random integer from 0 to (range - 1) */
@@ -106,7 +107,7 @@ unsigned long randqd1(unsigned long *idum)
 
 /* random:                                     */
 /* using rand function from standard C library */
-int random(long *seed)
+int random1(long *seed)
 {
    if (*seed == 0) {
       time_t t;
