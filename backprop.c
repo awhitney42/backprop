@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
    int activation_function = 0;
    
    if (argc < 3) {
-      fprintf(stderr, "usage: %s <data file> <wts file> <0=train/1=recall> [<0=logistic/1=hyperbolic tangent>]\n", argv[0]);
+      fprintf(stderr, "usage: %s <data file> <wts file> <0=train/1=recall> [<0=logistic/1=hyperbolic tangent>] [<number of outputs>]\n", argv[0]);
       exit(1);  
    }
 
@@ -72,6 +72,11 @@ int main(int argc, char **argv) {
    recall_flag = atoi(argv[3]);
    if (argc >= 5) {
       activation_function = atoi(argv[4]);
+   }
+   if (argc >= 6) {
+      numOutputs = atoi(argv[5]);
+   } else {
+      numOutputs = 1;
    }
 
 
@@ -107,17 +112,18 @@ int main(int argc, char **argv) {
 
    /****************/
    
-   numInputs = ncolumns - 1;
-   numOutputs = 1;
+   numInputs = ncolumns - numOutputs;
    numHiddenNodes = 2*numInputs;
    
-
+	printf("Data Cols: %d, Inputs: %d, Outputs: %d, Hidden Nodes: %d\n", ncolumns, numInputs, numOutputs, numHiddenNodes);
 
    specifyArchitecture(numInputs, numHiddenNodes, numOutputs);
 
-
+   printf("Neural Net Created\n");
 
    initializeWeights();
+
+   printf("Weights Initialized\n");
 
    readWeights(wtsFilename);
 
