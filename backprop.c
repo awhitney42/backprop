@@ -19,7 +19,7 @@ void readTrainFile(char *trainFilename, double **x, long npatterns, long ncolumn
 void normalizeData(double **x, int npatterns, int ncolumns, int activation_function);
 double neuronResponse(double v, int activation_function);
 double neuronResponsePrime(double v, int activation_function);
-void inducedLocalField(int j, int n);
+void inducedLocalField(int layer, int n);
 void specifyArchitecture(int numInputs, int numHiddenNodes, int numOutputs);
 void initializeWeights();
 void trainNetwork(double **x, int npatterns, int activation_function);
@@ -43,14 +43,12 @@ typedef struct
 } node;
 
 node **neuron = NULL;
-
 int neuronsPerLayer[NUM_LAYERS];
 
 /* Main Function */
 
 int main(int argc, char **argv)
 {
-
    long npatterns, ncolumns;
    int numInputs, numHiddenNodes, numOutputs;
    int i;
@@ -253,27 +251,27 @@ void readWeights(char *filename)
 void forwardPass(int pat_num, double **x, int activation_function)
 {
 
-   int j, n;
+   int layer, n;
 
    //   printf ("%d ******\n", pat_num);
 
-   for (j = 0; j < NUM_LAYERS; j++)
+   for (layer = 0; layer < NUM_LAYERS; layer++)
    {
 
-      for (n = 0; n < neuronsPerLayer[j]; n++)
+      for (n = 0; n < neuronsPerLayer[layer]; n++)
       {
 
-         if (j == 0)
+         if (layer == 0)
          {
-            neuron[j][n].y_j = x[pat_num][n];
+            neuron[layer][n].y_j = x[pat_num][n];
          }
          else
          {
 
             /* Calculate v_j */
-            inducedLocalField(j, n);
+            inducedLocalField(layer, n);
             /* Calculate y_j */
-            neuron[j][n].y_j = neuronResponse(neuron[j][n].v_j, activation_function);
+            neuron[layer][n].y_j = neuronResponse(neuron[layer][n].v_j, activation_function);
          }
       }
    }
@@ -282,46 +280,46 @@ void forwardPass(int pat_num, double **x, int activation_function)
 void backwardPass(int pat_num, double **x, int activation_function)
 {
 
-   int j, n, k, i;
+   int layer, n, k, i;
    double e_j = 0.0, step_size = 0.01;
 
-   for (j = NUM_LAYERS - 1; j > 0; j--)
+   for (layer = NUM_LAYERS - 1; layer > 0; layer--)
    {
 
-      for (n = 0; n < neuronsPerLayer[j]; n++)
+      for (n = 0; n < neuronsPerLayer[layer]; n++)
       {
 
-         if (j == (NUM_LAYERS - 1))
+         if (layer == (NUM_LAYERS - 1))
          {
 
             /* Calculate d_j */
 
-            e_j = x[pat_num][neuronsPerLayer[0]] - neuron[j][n].y_j;
+            e_j = x[pat_num][neuronsPerLayer[0]+n] - neuron[layer][n].y_j;
             // printf("%d Error: %f\n", pat_num, e_j);
-            neuron[j][n].d_j = e_j * neuronResponsePrime(neuron[j][n].v_j, activation_function);
+            neuron[layer][n].d_j = e_j * neuronResponsePrime(neuron[layer][n].v_j, activation_function);
             // printf("%d v):       %f\n", pat_num, neuron[j][n].v_j);
          }
          else
          {
 
             /* Calculate d_j */
-            neuron[j][n].d_j = 0.0;
-            for (k = 0; k < neuronsPerLayer[j + 1]; k++)
+            neuron[layer][n].d_j = 0.0;
+            for (k = 0; k < neuronsPerLayer[layer + 1]; k++)
             {
-               neuron[j][n].d_j += neuronResponsePrime(neuron[j][n].v_j, activation_function) *
-                                   (neuron[j + 1][k].d_j * neuron[j + 1][k].w_ji[n]);
+               neuron[layer][n].d_j += neuronResponsePrime(neuron[layer][n].v_j, activation_function) *
+                                   (neuron[layer + 1][k].d_j * neuron[layer + 1][k].w_ji[n]);
             }
          }
 
          /* Calculate delta_w_ji and adjust w_ji */
 
-         for (i = 0; i < neuronsPerLayer[j - 1]; i++)
+         for (i = 0; i < neuronsPerLayer[layer - 1]; i++)
          {
 
-            neuron[j][n].delta_w_ji[i] = neuron[j][n].d_j * neuron[j - 1][i].y_j;
-            neuron[j][n].w_ji[i] += step_size * neuron[j][n].delta_w_ji[i];
+            neuron[layer][n].delta_w_ji[i] = neuron[layer][n].d_j * neuron[layer - 1][i].y_j;
+            neuron[layer][n].w_ji[i] += step_size * neuron[layer][n].delta_w_ji[i];
 
-            // printf("%f ", neuron[j][n].w_ji[i]);
+            // printf("%f ", neuron[layer][n].w_ji[i]);
          }
          // printf ("\n");
 
@@ -329,7 +327,7 @@ void backwardPass(int pat_num, double **x, int activation_function)
 
       // printf ("\n");
 
-   } /* for (j...) */
+   } /* for (layer...) */
 }
 
 void recallNetwork(double **x, int npatterns, int activation_function)
@@ -350,14 +348,14 @@ void recallNetwork(double **x, int npatterns, int activation_function)
    yiyip = (double *)malloc(sizeof(double) * neuronsPerLayer[NUM_LAYERS - 1]);
    rms = (double *)malloc(sizeof(double) * neuronsPerLayer[NUM_LAYERS - 1]);
 
-   for (i = 0; i < neuronsPerLayer[NUM_LAYERS - 1]; i++)
+   for (j = 0; j < neuronsPerLayer[NUM_LAYERS - 1]; j++)
    {
-      yi[i] = 0.0;
-      yip[i] = 0.0;
-      yisq[i] = 0.0;
-      yipsq[i] = 0.0;
-      yiyip[i] = 0.0;
-      rms[i] = 0.0;
+      yi[j] = 0.0;
+      yip[j] = 0.0;
+      yisq[j] = 0.0;
+      yipsq[j] = 0.0;
+      yiyip[j] = 0.0;
+      rms[j] = 0.0;
    }
 
    for (j = 0; j < neuronsPerLayer[0]; j++)
@@ -515,36 +513,32 @@ void specifyArchitecture(int numInputs, int numHiddenNodes, int numOutputs)
 
    for (i = 0; i < NUM_LAYERS; i++)
    {
-
       if (i == 0)
       {
-
          neuron[i] = (node *)malloc(sizeof(node) * numInputs);
          neuronsPerLayer[i] = numInputs;
       }
       else if (i == 1)
       {
-
          neuron[i] = (node *)malloc(sizeof(node) * numHiddenNodes);
          neuronsPerLayer[i] = numHiddenNodes;
       }
       else
       {
-
          neuron[i] = (node *)malloc(sizeof(node) * numOutputs);
          neuronsPerLayer[i] = numOutputs;
       }
    }
 }
 
-void inducedLocalField(int j, int n)
+void inducedLocalField(int layer, int n)
 {
 
    int m;
-   neuron[j][n].v_j = neuron[j][n].bias;
-   for (m = 0; m < neuronsPerLayer[j - 1]; m++)
+   neuron[layer][n].v_j = neuron[layer][n].bias;
+   for (m = 0; m < neuronsPerLayer[layer - 1]; m++)
    {
-      neuron[j][n].v_j += neuron[j][n].w_ji[m] * neuron[j - 1][m].y_j;
+      neuron[layer][n].v_j += neuron[layer][n].w_ji[m] * neuron[layer - 1][m].y_j;
    }
 }
 
