@@ -10,7 +10,7 @@ A simple implementation of a Back-Propagation Artificial Neural Network in C.
 
 # USAGE
 
-` backprop <data file> <wts file> <0=train/1=recall> [<0=logistic/1=hyperbolic tangent>]`
+` backprop <data file> <wts file> <0=train/1=recall> [<0=logistic/1=hyperbolic tangent>] [<number of outputs>]`
 
 # EXAMPLES
 
