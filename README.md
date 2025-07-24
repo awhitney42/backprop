@@ -15,8 +15,11 @@ A simple implementation of a Back-Propagation Artificial Neural Network in C.
 # EXAMPLES
 
 ` backprop xor.dat xor.wts 0 0 1` 
+
 ` backprop xor_recall.dat xor.wts 1 0 1` 
+
 ` backprop iris.dat iris.wts 0 0 3` 
+
 ` backprop iris_recall.dat iris.wts 1 0 3` 
 
 # REFERENCES
