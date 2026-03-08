@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     int recall_flag = 0;
     int activation_function = 0;
 
-    if (argc < 3)
+    if (argc < 4)
     {
         fprintf(stderr, "usage: %s <data file> <wts file> <0=train/1=recall> [<0=logistic/1=hyperbolic tangent>] [<number of outputs>]\n", argv[0]);
         exit(1);
@@ -67,6 +67,11 @@ int main(int argc, char **argv)
 
     /* Process Arguments */
 
+    if (strlen(argv[1]) >= MAX_STRING || strlen(argv[2]) >= MAX_STRING)
+    {
+        fprintf(stderr, "Error: filename exceeds maximum length of %d characters.\n", MAX_STRING - 1);
+        exit(1);
+    }
     strcpy(dataFilename, argv[1]);
     strcpy(wtsFilename, argv[2]);
     recall_flag = atoi(argv[3]);
@@ -77,6 +82,11 @@ int main(int argc, char **argv)
     if (argc >= 6)
     {
         numOutputs = atoi(argv[5]);
+        if (numOutputs < 1)
+        {
+            fprintf(stderr, "Error: number of outputs must be at least 1.\n");
+            exit(1);
+        }
     }
     else
     {
@@ -129,26 +139,7 @@ int main(int argc, char **argv)
 
     readWeights(wtsFilename);
 
-    if (recall_flag)
-    {
-
-        /* Recall the network. */
-
-        free(x[0]);
-        free(x);
-
-        dfile_info(dataFilename, &npatterns, &ncolumns, &linelength);
-
-        x = (double **)malloc(npatterns * sizeof(double *));
-        x[0] = (double *)malloc(npatterns * ncolumns * sizeof(double));
-        for (i = 1; i < npatterns; i++)
-            x[i] = x[0] + i * ncolumns;
-
-        readTrainFile(dataFilename, x, npatterns, ncolumns);
-
-        //      normalizeData(x, npatterns, ncolumns, activation_function);
-    }
-    else
+    if (!recall_flag)
     {
 
         /* Train the network. */
@@ -321,6 +312,14 @@ void backwardPass(int pat_num, double **x, int activation_function)
 
                 // printf("%f ", neuron[layer][n].w_ji[i]);
             }
+
+            /* While adjusting the bias on the backward pass is functionally correct and mentioned in
+               Haykin chapter 4 (pages 171 - 172), the algorithm in this chapter isn't clear to me
+               on the value for the bias adjustment. This is my attempt at getting it right.
+             */
+
+            /* Adjust bias (equivalent to a weight with constant input of +1) */
+            neuron[layer][n].bias += step_size * neuron[layer][n].d_j;
             // printf ("\n");
 
         } /* for (n...) */
